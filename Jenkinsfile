@@ -19,7 +19,7 @@ pipeline {
             steps {
                 echo '✅ Validating static frontend files...'
                 sh 'test -f index.html'
-                sh 'test -f styles.css'
+                sh 'test -f style.css'   // corrected filename
                 sh 'test -f script.js'
             }
         }
@@ -31,7 +31,7 @@ pipeline {
 rm -rf dist
 mkdir -p dist
 cp index.html dist/
-cp styles.css dist/
+cp style.css dist/
 cp script.js dist/
 tar -czf carwash-frontend-static.tar.gz -C dist .
 '''
@@ -39,12 +39,10 @@ tar -czf carwash-frontend-static.tar.gz -C dist .
         }
 
         stage('Deploy') {
-            when { expression { params.DEPLOY_PRODUCTION == true } }
             steps {
                 echo '🚀 Deploying static frontend...'
                 sh '''#!/bin/bash
 set -euo pipefail
-# Example deploy command
 cp carwash-frontend-static.tar.gz /opt/carwash-frontend/
 '''
             }
