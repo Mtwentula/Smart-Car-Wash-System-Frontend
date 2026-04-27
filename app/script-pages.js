@@ -227,11 +227,52 @@ function bindMembershipActions() {
         method: 'POST',
         body: JSON.stringify({ planId: planId, autoRenew: true, payment }),
       });
+      await hydrateCurrentMembership();
       if (status) status.textContent = 'Membership subscribed successfully.';
     } catch (error) {
       if (status) status.textContent = error.message;
     }
   });
+}
+
+async function hydrateCurrentMembership() {
+  const panel = document.getElementById('membership-current-summary');
+  const status = document.getElementById('membership-current-status');
+  if (!panel || !status) return;
+
+  if (!readAccessToken()) {
+    panel.innerHTML = '';
+    status.textContent = 'Login to view your current membership details.';
+    return;
+  }
+
+  try {
+    const membership = await apiRequest('/api/v1/membership', { method: 'GET' });
+    const planName = membership?.plan?.name || 'Unknown';
+    const statusValue = membership?.status || 'UNKNOWN';
+    const credits = membership?.creditsRemaining ?? 0;
+    const days = membership?.daysUntilExpiry ?? 0;
+    const expiry = membership?.expiryDate ? new Date(membership.expiryDate).toLocaleString() : 'N/A';
+
+    panel.innerHTML = [
+      { label: 'Plan', value: planName },
+      { label: 'Status', value: statusValue },
+      { label: 'Credits', value: String(credits) },
+      { label: 'Days Left', value: String(days) },
+      { label: 'Expires', value: expiry },
+      { label: 'Payment Ref', value: membership?.latestPaymentReference || 'N/A' },
+    ].map((item) => `
+      <div style="border:1px solid var(--panel-border);border-radius:10px;padding:12px;">
+        <p style="margin:0 0 4px;color:var(--metallic);font-size:12px;">${item.label}</p>
+        <p style="margin:0;font-weight:600;font-size:14px;word-break:break-word;">${item.value}</p>
+      </div>
+    `).join('');
+
+    status.textContent = 'Membership profile loaded.';
+  } catch (error) {
+    panel.innerHTML = '';
+    status.textContent = error.message;
+  }
 }
 
 function bindMembershipManagementActions() {
@@ -256,6 +297,7 @@ function bindMembershipManagementActions() {
           body: JSON.stringify({ payment }),
         });
 
+        await hydrateCurrentMembership();
         if (status) status.textContent = 'Membership renewed successfully.';
       } catch (error) {
         if (status) status.textContent = error.message;
@@ -287,6 +329,7 @@ function bindMembershipManagementActions() {
           body: JSON.stringify({ payment }),
         });
 
+        await hydrateCurrentMembership();
         if (status) status.textContent = 'Membership upgraded successfully.';
       } catch (error) {
         if (status) status.textContent = error.message;
@@ -448,6 +491,7 @@ if (brandLink && brandLink.dataset.scrollTop === 'true') {
 initTheme();
 hydrateLoginButtons();
 hydrateMembershipPlans();
+hydrateCurrentMembership();
 bindMembershipActions();
 bindMembershipManagementActions();
 bindBookingForm('bay-booking-form', 'bay-booking-status', false);
