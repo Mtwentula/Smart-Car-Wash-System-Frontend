@@ -1,25 +1,11 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven'
-    }
-
     parameters {
-        choice(
-            name: 'ACTION',
-            choices: ['deploy', 'rollback', 'setup', 'status'],
-            description: 'Select action'
-        )
         booleanParam(
             name: 'RUN_TESTS',
             defaultValue: true,
-            description: 'Run tests?'
-        )
-        booleanParam(
-            name: 'BUILD_DOCKER',
-            defaultValue: false,
-            description: 'Build Docker images? (optional)'
+            description: 'Run frontend tests?'
         )
         booleanParam(
             name: 'DEPLOY_PRODUCTION',
@@ -38,11 +24,6 @@ pipeline {
         TEAM = 'lintshiwe'
         STACK = 'nodejs'
         APP_DIR = '/opt/carwash-frontend'
-        FRAMEWORK_DIR = '/home/lintshiwe/devops-framework'
-        PROJECT_DIR = '/home/lintshiwe/devops-framework/projects/carwash-frontend'
-        JAVA_HOME = "${sh(script: 'dirname $(dirname $(readlink -f $(which java)))', returnStdout: true).trim()}"
-        PATH = "${JAVA_HOME}/bin:${env.PATH}"
-        ANSIBLE_HOST_KEY_CHECKING = 'False'
     }
 
     options {
@@ -60,106 +41,33 @@ pipeline {
             }
         }
 
-        stage('Build') {
-            when { expression { params.ACTION == 'deploy' } }
+        stage('Install') {
             steps {
-                echo "🔨 [${PROJECT}] Building..."
-                sh 'mvn clean package -DskipTests'
+                echo "📦 Installing dependencies..."
+                sh 'npm install'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                echo "🔨 Building frontend..."
+                sh 'npm run build'
             }
         }
 
         stage('Test') {
-            when {
-                allOf {
-                    expression { params.ACTION == 'deploy' }
-                    expression { params.RUN_TESTS == true }
-                }
-            }
+            when { expression { params.RUN_TESTS == true } }
             steps {
-                echo "🧪 [${PROJECT}] Testing..."
-                sh 'mvn test'
-            }
-        }
-
-        stage('Setup Infrastructure') {
-            when { expression { params.ACTION == 'setup' } }
-            steps {
-                echo "🏗️ [${PROJECT}] Setting up infrastructure..."
-                sh """#!/bin/bash
-ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/setup.yml \
-    -i ${PROJECT_DIR}/inventory.ini \
-    -e @${PROJECT_DIR}/config.yml \
-    -v
-"""
-            }
-        }
-
-        stage('Deploy') {
-            when { expression { params.ACTION == 'deploy' } }
-            steps {
-                echo "🚀 [${PROJECT}] Deploying..."
-                sh """#!/bin/bash
-ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/deploy.yml \
-    -i ${PROJECT_DIR}/inventory.ini \
-    -e @${PROJECT_DIR}/config.yml \
-    -v
-"""
-            }
-        }
-
-        stage('Rollback') {
-            when { expression { params.ACTION == 'rollback' } }
-            steps {
-                echo "⏪ [${PROJECT}] Rolling back..."
-                sh """#!/bin/bash
-ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/rollback.yml \
-    -i ${PROJECT_DIR}/inventory.ini \
-    -e @${PROJECT_DIR}/config.yml \
-    -v
-"""
-            }
-        }
-
-        stage('Status') {
-            when { expression { params.ACTION == 'status' } }
-            steps {
-                echo "📊 [${PROJECT}] Checking status..."
-                sh """#!/bin/bash
-ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/status.yml \
-    -i ${PROJECT_DIR}/inventory.ini \
-    -e @${PROJECT_DIR}/config.yml \
-    -v
-"""
-            }
-        }
-
-        stage('Docker (Optional)') {
-            when { expression { params.BUILD_DOCKER == true } }
-            steps {
-                echo "🐳 [${PROJECT}] Building Docker images..."
-                sh "${FRAMEWORK_DIR}/scripts/docker-build.sh carwash-frontend"
-            }
-        }
-
-        stage('Health Check') {
-            when { expression { params.ACTION == 'deploy' } }
-            steps {
-                echo "💓 [${PROJECT}] Health check..."
-                sh """#!/bin/bash
-sleep 15
-ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/status.yml \
-    -i ${PROJECT_DIR}/inventory.ini \
-    -e @${PROJECT_DIR}/config.yml
-"""
+                echo "🧪 Running tests..."
+                sh 'npm test'
             }
         }
 
         stage('Validate') {
             steps {
                 echo 'Validating static frontend structure...'
-                sh 'test -f app/index.html'
-                sh 'test -f app/styles.css'
-                sh 'test -f app/script.js'
+                sh 'test -f public/index.html'
+                sh 'test -f src/App.js'
             }
         }
 
@@ -169,7 +77,7 @@ ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/status.yml \
                 sh '''#!/bin/bash
 rm -rf dist
 mkdir -p dist
-cp -r app/* dist/
+cp -r build/* dist/
 tar -czf carwash-frontend-static.tar.gz -C dist .
 '''
             }
@@ -198,7 +106,7 @@ tar -czf carwash-frontend-static.tar.gz -C dist .
                         error 'DEPLOY_PRODUCTION=true but PROD_DEPLOY_CMD is empty. Provide deployment command.'
                     }
                 }
-                echo 'Deploying frontend to production...'
+                echo '🚀 Deploying frontend to production...'
                 sh '''#!/bin/bash
 set -euo pipefail
 eval "$PROD_DEPLOY_CMD"
@@ -209,12 +117,10 @@ eval "$PROD_DEPLOY_CMD"
 
     post {
         success {
-            echo "✅ [${PROJECT}] Pipeline completed!"
-            echo 'Frontend pipeline completed successfully (no Maven required).'
+            echo "✅ [${PROJECT}] Pipeline completed successfully!"
         }
         failure {
-            echo "❌ [${PROJECT}] Pipeline failed! Logs: /opt/carwash-frontend/logs/"
-            echo 'Frontend pipeline failed.'
+            echo "❌ [${PROJECT}] Pipeline failed!"
         }
         always {
             cleanWs()
