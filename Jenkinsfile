@@ -21,6 +21,16 @@ pipeline {
             defaultValue: false,
             description: 'Build Docker images? (optional)'
         )
+        booleanParam(
+            name: 'DEPLOY_PRODUCTION',
+            defaultValue: false,
+            description: 'Deploy this build to production'
+        )
+        string(
+            name: 'PROD_DEPLOY_CMD',
+            defaultValue: '',
+            description: 'Shell command used to deploy frontend to production target'
+        )
     }
 
     environment {
@@ -35,8 +45,12 @@ pipeline {
         ANSIBLE_HOST_KEY_CHECKING = 'False'
     }
 
-    stages {
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
 
+    stages {
         stage('Checkout') {
             steps {
                 echo "📥 [${PROJECT}] Pulling code..."
@@ -47,9 +61,7 @@ pipeline {
         }
 
         stage('Build') {
-            when {
-                expression { params.ACTION == 'deploy' }
-            }
+            when { expression { params.ACTION == 'deploy' } }
             steps {
                 echo "🔨 [${PROJECT}] Building..."
                 sh 'mvn clean package -DskipTests'
@@ -70,9 +82,7 @@ pipeline {
         }
 
         stage('Setup Infrastructure') {
-            when {
-                expression { params.ACTION == 'setup' }
-            }
+            when { expression { params.ACTION == 'setup' } }
             steps {
                 echo "🏗️ [${PROJECT}] Setting up infrastructure..."
                 sh """
@@ -85,9 +95,7 @@ pipeline {
         }
 
         stage('Deploy') {
-            when {
-                expression { params.ACTION == 'deploy' }
-            }
+            when { expression { params.ACTION == 'deploy' } }
             steps {
                 echo "🚀 [${PROJECT}] Deploying..."
                 sh """
@@ -100,9 +108,7 @@ pipeline {
         }
 
         stage('Rollback') {
-            when {
-                expression { params.ACTION == 'rollback' }
-            }
+            when { expression { params.ACTION == 'rollback' } }
             steps {
                 echo "⏪ [${PROJECT}] Rolling back..."
                 sh """
@@ -115,9 +121,7 @@ pipeline {
         }
 
         stage('Status') {
-            when {
-                expression { params.ACTION == 'status' }
-            }
+            when { expression { params.ACTION == 'status' } }
             steps {
                 echo "📊 [${PROJECT}] Checking status..."
                 sh """
@@ -130,21 +134,15 @@ pipeline {
         }
 
         stage('Docker (Optional)') {
-            when {
-                expression { params.BUILD_DOCKER == true }
-            }
+            when { expression { params.BUILD_DOCKER == true } }
             steps {
                 echo "🐳 [${PROJECT}] Building Docker images..."
-                sh """
-                    ${FRAMEWORK_DIR}/scripts/docker-build.sh carwash-frontend
-                """
+                sh "${FRAMEWORK_DIR}/scripts/docker-build.sh carwash-frontend"
             }
         }
 
         stage('Health Check') {
-            when {
-                expression { params.ACTION == 'deploy' }
-            }
+            when { expression { params.ACTION == 'deploy' } }
             steps {
                 echo "💓 [${PROJECT}] Health check..."
                 sh """
@@ -155,87 +153,17 @@ pipeline {
                 """
             }
         }
-    }
 
-    post {
-        success {
-            echo "✅ [${PROJECT}] Pipeline completed!"
+        stage('Validate') {
+            steps {
+                echo 'Validating static frontend structure...'
+                sh 'test -f app/index.html'
+                sh 'test -f app/styles.css'
+                sh 'test -f app/script.js'
+            }
         }
-        failure {
-            echo "❌ [${PROJECT}] Pipeline failed! Logs: /opt/carwash-frontend/logs/"
-        }
-        always {
-            cleanWs()
-        }
-    }
-  agent any
 
-  parameters {
-    booleanParam(name: 'DEPLOY_PRODUCTION', defaultValue: false, description: 'Deploy this build to production')
-    string(name: 'PROD_DEPLOY_CMD', defaultValue: '', description: 'Shell command used to deploy frontend to production target')
-  }
-
-  options {
-    timestamps()
-    disableConcurrentBuilds()
-  }
-
-  stages {
-    stage('Validate') {
-      steps {
-        echo 'Validating static frontend structure...'
-        sh 'test -f app/index.html'
-        sh 'test -f app/styles.css'
-        sh 'test -f app/script.js'
-      }
-    }
-
-    stage('Package') {
-      steps {
-        echo 'Packaging static frontend artifact...'
-        sh 'rm -rf dist && mkdir -p dist && cp -r app/* dist/'
-        sh 'tar -czf carwash-frontend-static.tar.gz -C dist .'
-      }
-    }
-
-    stage('Approve Production') {
-      when {
-        expression {
-          return params.DEPLOY_PRODUCTION && (env.BRANCH_NAME == null || env.BRANCH_NAME == 'main')
-        }
-      }
-      steps {
-        input message: 'Deploy frontend build to PRODUCTION?', ok: 'Deploy'
-      }
-    }
-
-    stage('Deploy Production') {
-      when {
-        expression {
-          return params.DEPLOY_PRODUCTION && (env.BRANCH_NAME == null || env.BRANCH_NAME == 'main')
-        }
-      }
-      steps {
-        script {
-          if (!params.PROD_DEPLOY_CMD?.trim()) {
-            error 'DEPLOY_PRODUCTION=true but PROD_DEPLOY_CMD is empty. Provide deployment command.'
-          }
-        }
-        echo 'Deploying frontend to production...'
-        sh '''#!/usr/bin/env bash
-set -euo pipefail
-eval "$PROD_DEPLOY_CMD"
-'''
-      }
-    }
-  }
-
-  post {
-    success {
-      echo 'Frontend pipeline completed successfully (no Maven required).'
-    }
-    failure {
-      echo 'Frontend pipeline failed.'
-    }
-  }
-}
+        stage('Package') {
+            steps {
+                echo 'Packaging static frontend artifact...'
+                sh 'rm -rf dist && mkdir -p dist
