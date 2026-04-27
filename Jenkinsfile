@@ -1,23 +1,4 @@
-stage('Validate') {
-    steps {
-        echo '✅ Validating static frontend files...'
-        sh 'test -f index.html'
-        sh 'test -f style.css'
-        sh 'test -f script.js'
-    }
-}
-
-stage('Package') {
-    steps {
-        echo '📦 Packaging static frontend...'
-        sh '''#!/bin/bash
-rm -rf dist
-mkdir -p dist
-cp index.html dist/
-cp style.css dist/
-cp script.js dist/
-tar -czf carwash-frontend-static.tar.gz -C dist .
-'''pipeline {
+pipeline {
     agent any
 
     stages {
@@ -28,14 +9,22 @@ tar -czf carwash-frontend-static.tar.gz -C dist .
             }
         }
 
-        stage('Validate Files') {
+        stage('Validate') {
             steps {
-                echo 'Checking if index.html exists...'
+                echo 'Validating static website files...'
+
                 script {
                     if (!fileExists('index.html')) {
-                        error('index.html not found! Build failed.')
+                        error('❌ index.html not found. Make sure it exists in the root directory.')
                     }
                 }
+            }
+        }
+
+        stage('List Files') {
+            steps {
+                echo 'Listing project files...'
+                sh 'ls -la'
             }
         }
 
@@ -44,17 +33,24 @@ tar -czf carwash-frontend-static.tar.gz -C dist .
                 archiveArtifacts artifacts: '**/*.html, **/*.css, **/*.js', fingerprint: true
             }
         }
+
+        stage('Serve (Optional)') {
+            steps {
+                echo 'Starting temporary local server on port 8080...'
+
+                sh '''
+                    nohup python3 -m http.server 8080 > server.log 2>&1 &
+                '''
+            }
+        }
     }
 
     post {
         success {
-            echo 'Static site ready 🚀'
+            echo '✅ Static site pipeline completed successfully!'
         }
         failure {
-            echo 'Something went wrong ❌'
+            echo '❌ Pipeline failed. Check logs above.'
         }
     }
 }
-    }
-}
-
