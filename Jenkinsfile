@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        DEPLOY_PATH = '/var/www/html'   // change if needed
+    }
+
     stages {
 
         stage('Checkout') {
@@ -11,46 +15,43 @@ pipeline {
 
         stage('Validate') {
             steps {
-                echo 'Validating static website files...'
-
+                echo 'Validating website...'
                 script {
                     if (!fileExists('index.html')) {
-                        error('❌ index.html not found. Make sure it exists in the root directory.')
+                        error('index.html not found!')
                     }
                 }
             }
         }
 
-        stage('List Files') {
+        stage('Prepare Deployment') {
             steps {
-                echo 'Listing project files...'
-                sh 'ls -la'
+                echo 'Cleaning deployment directory...'
+                sh "rm -rf ${DEPLOY_PATH}/*"
             }
         }
 
-        stage('Archive Website') {
+        stage('Deploy Website') {
             steps {
-                archiveArtifacts artifacts: '**/*.html, **/*.css, **/*.js', fingerprint: true
+                echo 'Deploying website files...'
+                sh "cp -r * ${DEPLOY_PATH}/"
             }
         }
 
-        stage('Serve (Optional)') {
+        stage('Set Permissions') {
             steps {
-                echo 'Starting temporary local server on port 8080...'
-
-                sh '''
-                    nohup python3 -m http.server 8080 > server.log 2>&1 &
-                '''
+                sh "chmod -R 755 ${DEPLOY_PATH}"
             }
         }
+
     }
 
     post {
         success {
-            echo '✅ Static site pipeline completed successfully!'
+            echo '✅ Website deployed successfully!'
         }
         failure {
-            echo '❌ Pipeline failed. Check logs above.'
+            echo '❌ Deployment failed.'
         }
     }
 }
