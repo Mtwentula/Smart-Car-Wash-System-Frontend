@@ -18,16 +18,19 @@ pipeline {
         stage('Validate') {
             steps {
                 echo '✅ Validating static frontend files...'
-                sh 'test -f index.html'
-                sh 'test -f style.css'   // corrected filename
-                sh 'test -f script.js'
+                dir('Smart-Car-Wash-System-Frontend') {   // run inside repo folder
+                    sh 'test -f index.html'
+                    sh 'test -f style.css'
+                    sh 'test -f script.js'
+                }
             }
         }
 
         stage('Package') {
             steps {
                 echo '📦 Packaging static frontend...'
-                sh '''#!/bin/bash
+                dir('Smart-Car-Wash-System-Frontend') {
+                    sh '''#!/bin/bash
 rm -rf dist
 mkdir -p dist
 cp index.html dist/
@@ -35,16 +38,19 @@ cp style.css dist/
 cp script.js dist/
 tar -czf carwash-frontend-static.tar.gz -C dist .
 '''
+                }
             }
         }
 
         stage('Deploy') {
             steps {
                 echo '🚀 Deploying static frontend...'
-                sh '''#!/bin/bash
+                dir('Smart-Car-Wash-System-Frontend') {
+                    sh '''#!/bin/bash
 set -euo pipefail
 cp carwash-frontend-static.tar.gz /opt/carwash-frontend/
 '''
+                }
             }
         }
     }
