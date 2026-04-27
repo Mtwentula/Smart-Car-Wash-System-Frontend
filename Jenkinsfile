@@ -2,20 +2,20 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_PATH = '/var/www/html'   // change if needed
+        REPO = 'https://github.com/Lintshiwe/Smart-Car-Wash-System-Frontend.git'
+        BRANCH = 'gh-pages'
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/Lintshiwe/Smart-Car-Wash-System-Frontend.git', branch: 'main'
+                git url: "${REPO}", branch: 'main'
             }
         }
 
         stage('Validate') {
             steps {
-                echo 'Validating website...'
                 script {
                     if (!fileExists('index.html')) {
                         error('index.html not found!')
@@ -24,34 +24,31 @@ pipeline {
             }
         }
 
-        stage('Prepare Deployment') {
+        stage('Deploy to GitHub Pages') {
             steps {
-                echo 'Cleaning deployment directory...'
-                sh "rm -rf ${DEPLOY_PATH}/*"
+                withCredentials([usernamePassword(credentialsId: 'github-token', usernameVariable: 'USER', passwordVariable: 'TOKEN')]) {
+                    sh '''
+                        git config --global user.email "jenkins@local"
+                        git config --global user.name "Jenkins"
+
+                        # Create gh-pages branch
+                        git checkout --orphan gh-pages
+
+                        # Remove old files
+                        git rm -rf .
+
+                        # Copy only site files
+                        cp -r ../* .
+
+                        # Add & commit
+                        git add .
+                        git commit -m "Deploy to GitHub Pages"
+
+                        # Push
+                        git push https://$USER:$TOKEN@github.com/Lintshiwe/Smart-Car-Wash-System-Frontend.git gh-pages --force
+                    '''
+                }
             }
-        }
-
-        stage('Deploy Website') {
-            steps {
-                echo 'Deploying website files...'
-                sh "cp -r * ${DEPLOY_PATH}/"
-            }
-        }
-
-        stage('Set Permissions') {
-            steps {
-                sh "chmod -R 755 ${DEPLOY_PATH}"
-            }
-        }
-
-    }
-
-    post {
-        success {
-            echo '✅ Website deployed successfully!'
-        }
-        failure {
-            echo '❌ Deployment failed.'
         }
     }
 }
