@@ -4,6 +4,8 @@ const htmlElement = document.documentElement;
 
 const API_BASE = localStorage.getItem('int216d:apiBase') || 'http://localhost:8080';
 const ACCESS_TOKEN_KEY = 'int216d:accessToken';
+const DEFAULT_PAYMENT_GATEWAY = 'SIMULATED';
+let cachedMembershipPlans = [];
 
 function readAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -156,8 +158,13 @@ async function hydrateMembershipPlans() {
   try {
     const plans = await apiRequest('/api/v1/membership/plans/active', { method: 'GET' });
     if (!Array.isArray(plans) || plans.length === 0) {
+      cachedMembershipPlans = [];
+      populateUpgradePlanOptions();
       return;
     }
+
+    cachedMembershipPlans = plans;
+    populateUpgradePlanOptions();
 
     plansGrid.innerHTML = plans.map((plan) => `
       <div class="membership-card">
@@ -183,6 +190,20 @@ async function hydrateMembershipPlans() {
   }
 }
 
+function populateUpgradePlanOptions() {
+  const select = document.getElementById('membership-upgrade-plan');
+  if (!select) return;
+
+  if (!Array.isArray(cachedMembershipPlans) || cachedMembershipPlans.length === 0) {
+    select.innerHTML = '<option value="">No active plans available</option>';
+    return;
+  }
+
+  select.innerHTML = cachedMembershipPlans
+    .map((plan) => `<option value="${plan.id}">${plan.name} - R${Number(plan.monthlyPrice || 0).toFixed(2)}</option>`)
+    .join('');
+}
+
 function bindMembershipActions() {
   const plansGrid = document.getElementById('membership-plans-grid');
   if (!plansGrid) return;
@@ -200,10 +221,11 @@ function bindMembershipActions() {
     }
 
     try {
+      const payment = membershipPaymentPayload();
       if (status) status.textContent = 'Subscribing...';
       await apiRequest('/api/v1/membership/subscribe', {
         method: 'POST',
-        body: JSON.stringify({ planId: planId, autoRenew: true }),
+        body: JSON.stringify({ planId: planId, autoRenew: true, payment }),
       });
       if (status) status.textContent = 'Membership subscribed successfully.';
     } catch (error) {
@@ -212,11 +234,111 @@ function bindMembershipActions() {
   });
 }
 
+function bindMembershipManagementActions() {
+  const renewButton = document.getElementById('membership-renew-btn');
+  const upgradeButton = document.getElementById('membership-upgrade-btn');
+  const status = document.getElementById('membership-manage-status');
+
+  if (renewButton) {
+    renewButton.addEventListener('click', async () => {
+      if (!readAccessToken()) {
+        if (status) status.textContent = 'Please login first to renew your membership.';
+        openAuthModal();
+        return;
+      }
+
+      try {
+        const payment = membershipPaymentPayload();
+        if (status) status.textContent = 'Renewing membership...';
+
+        await apiRequest('/api/v1/membership/renew', {
+          method: 'POST',
+          body: JSON.stringify({ payment }),
+        });
+
+        if (status) status.textContent = 'Membership renewed successfully.';
+      } catch (error) {
+        if (status) status.textContent = error.message;
+      }
+    });
+  }
+
+  if (upgradeButton) {
+    upgradeButton.addEventListener('click', async () => {
+      if (!readAccessToken()) {
+        if (status) status.textContent = 'Please login first to upgrade your membership.';
+        openAuthModal();
+        return;
+      }
+
+      const planSelect = document.getElementById('membership-upgrade-plan');
+      const selectedPlanId = Number(planSelect?.value || 0);
+      if (!selectedPlanId || Number.isNaN(selectedPlanId)) {
+        if (status) status.textContent = 'Select a valid plan to upgrade.';
+        return;
+      }
+
+      try {
+        const payment = membershipPaymentPayload();
+        if (status) status.textContent = 'Upgrading membership...';
+
+        await apiRequest(`/api/v1/membership/upgrade/${selectedPlanId}`, {
+          method: 'POST',
+          body: JSON.stringify({ payment }),
+        });
+
+        if (status) status.textContent = 'Membership upgraded successfully.';
+      } catch (error) {
+        if (status) status.textContent = error.message;
+      }
+    });
+  }
+}
+
+function normalizedAddOnCodes(rawCodes) {
+  return rawCodes
+    .map((code) => String(code || '').trim())
+    .filter((code) => code.length > 0)
+    .map((code) => code.replace(/-/g, '_').toUpperCase());
+}
+
+function paymentPayloadFromForm(form) {
+  const data = new FormData(form);
+  const gateway = String(data.get('paymentGateway') || DEFAULT_PAYMENT_GATEWAY).trim().toUpperCase();
+  const paymentMethodToken = String(data.get('paymentMethodToken') || '').trim();
+
+  if (!paymentMethodToken) {
+    throw new Error('Please provide a payment token to continue.');
+  }
+
+  return {
+    gateway,
+    paymentMethodToken,
+  };
+}
+
+function membershipPaymentPayload() {
+  const gatewayInput = document.getElementById('membership-payment-gateway');
+  const tokenInput = document.getElementById('membership-payment-token');
+  const gateway = String(gatewayInput?.value || DEFAULT_PAYMENT_GATEWAY).trim().toUpperCase();
+  const paymentMethodToken = String(tokenInput?.value || '').trim();
+
+  if (!paymentMethodToken) {
+    throw new Error('Enter your membership payment token before subscribing.');
+  }
+
+  return {
+    gateway,
+    paymentMethodToken,
+  };
+}
+
 function bookingPayloadFromForm(form, isMobile) {
   const data = new FormData(form);
   const date = data.get('preferredDate');
   const time = data.get('preferredTime');
   const location = isMobile ? data.get('serviceAddress') : data.get('location');
+  const payment = paymentPayloadFromForm(form);
 
   return {
     serviceType: isMobile ? 'MOBILE' : 'BAY',
@@ -228,7 +350,8 @@ function bookingPayloadFromForm(form, isMobile) {
     location: location,
     scheduledAt: date && time ? `${date}T${time}:00` : null,
     notes: data.get('notes') || null,
-    addOns: data.getAll('addOns'),
+    addOns: normalizedAddOnCodes(data.getAll('addOns')),
+    payment,
   };
 }
 
@@ -326,6 +449,7 @@ initTheme();
 hydrateLoginButtons();
 hydrateMembershipPlans();
 bindMembershipActions();
+bindMembershipManagementActions();
 bindBookingForm('bay-booking-form', 'bay-booking-status', false);
 bindBookingForm('mobile-booking-form', 'mobile-booking-status', true);
 

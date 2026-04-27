@@ -94,6 +94,24 @@
             <h2>Choose Your Level</h2>
           </div>
 
+          <div style="max-width: 920px; margin: 0 auto 28px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 16px; padding: 24px;">
+            <h3 style="margin: 0 0 16px; font-size: 18px; font-weight: 600;">Payment Details</h3>
+            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 12px;">
+              <div>
+                <label for="membership-payment-gateway" style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Gateway</label>
+                <select id="membership-payment-gateway" style="width: 100%; padding: 12px 16px; background: transparent; border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;">
+                  <option value="SIMULATED" selected>Simulated</option>
+                  <option value="OFFLINE">Offline</option>
+                </select>
+              </div>
+              <div>
+                <label for="membership-payment-token" style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Payment Token</label>
+                <input id="membership-payment-token" type="text" placeholder="tok_membership_12345" style="width: 100%; padding: 12px 16px; background: transparent; border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;" />
+              </div>
+            </div>
+            <p style="margin: 0; color: var(--metallic); font-size: 12px; line-height: 1.6;">Enter payment details once, then click any Join button below to subscribe to that plan.</p>
+          </div>
+
           <div id="membership-plans-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; max-width: 1200px; margin: 0 auto;">
             <!-- Basic Plan -->
             <div class="membership-card">
@@ -184,6 +202,23 @@
             </div>
           </div>
           <p id="membership-sync-status" style="text-align:center;margin:18px 0 0;color:var(--metallic);font-size:13px;"></p>
+
+          <div style="max-width: 920px; margin: 24px auto 0; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 16px; padding: 24px;">
+            <h3 style="margin: 0 0 16px; font-size: 18px; font-weight: 600;">Manage Membership</h3>
+
+            <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: end;">
+              <div>
+                <label for="membership-upgrade-plan" style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Upgrade To Plan</label>
+                <select id="membership-upgrade-plan" style="width: 100%; padding: 12px 16px; background: transparent; border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;">
+                  <option value="">Loading active plans...</option>
+                </select>
+              </div>
+              <button id="membership-renew-btn" type="button" class="pill-btn btn-outline" style="height: 44px;">Renew</button>
+              <button id="membership-upgrade-btn" type="button" class="pill-btn btn-primary" style="height: 44px;">Upgrade</button>
+            </div>
+
+            <p id="membership-manage-status" style="margin: 12px 0 0; color: var(--metallic); font-size: 13px;"></p>
+          </div>
         </div>
       </section>
 
