@@ -85,12 +85,12 @@ pipeline {
             when { expression { params.ACTION == 'setup' } }
             steps {
                 echo "🏗️ [${PROJECT}] Setting up infrastructure..."
-                sh """
-                    ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/setup.yml \
-                        -i ${PROJECT_DIR}/inventory.ini \
-                        -e @${PROJECT_DIR}/config.yml \
-                        -v
-                """
+                sh """#!/bin/bash
+ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/setup.yml \
+    -i ${PROJECT_DIR}/inventory.ini \
+    -e @${PROJECT_DIR}/config.yml \
+    -v
+"""
             }
         }
 
@@ -98,12 +98,12 @@ pipeline {
             when { expression { params.ACTION == 'deploy' } }
             steps {
                 echo "🚀 [${PROJECT}] Deploying..."
-                sh """
-                    ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/deploy.yml \
-                        -i ${PROJECT_DIR}/inventory.ini \
-                        -e @${PROJECT_DIR}/config.yml \
-                        -v
-                """
+                sh """#!/bin/bash
+ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/deploy.yml \
+    -i ${PROJECT_DIR}/inventory.ini \
+    -e @${PROJECT_DIR}/config.yml \
+    -v
+"""
             }
         }
 
@@ -111,12 +111,12 @@ pipeline {
             when { expression { params.ACTION == 'rollback' } }
             steps {
                 echo "⏪ [${PROJECT}] Rolling back..."
-                sh """
-                    ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/rollback.yml \
-                        -i ${PROJECT_DIR}/inventory.ini \
-                        -e @${PROJECT_DIR}/config.yml \
-                        -v
-                """
+                sh """#!/bin/bash
+ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/rollback.yml \
+    -i ${PROJECT_DIR}/inventory.ini \
+    -e @${PROJECT_DIR}/config.yml \
+    -v
+"""
             }
         }
 
@@ -124,12 +124,12 @@ pipeline {
             when { expression { params.ACTION == 'status' } }
             steps {
                 echo "📊 [${PROJECT}] Checking status..."
-                sh """
-                    ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/status.yml \
-                        -i ${PROJECT_DIR}/inventory.ini \
-                        -e @${PROJECT_DIR}/config.yml \
-                        -v
-                """
+                sh """#!/bin/bash
+ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/status.yml \
+    -i ${PROJECT_DIR}/inventory.ini \
+    -e @${PROJECT_DIR}/config.yml \
+    -v
+"""
             }
         }
 
@@ -145,12 +145,12 @@ pipeline {
             when { expression { params.ACTION == 'deploy' } }
             steps {
                 echo "💓 [${PROJECT}] Health check..."
-                sh """
-                    sleep 15
-                    ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/status.yml \
-                        -i ${PROJECT_DIR}/inventory.ini \
-                        -e @${PROJECT_DIR}/config.yml
-                """
+                sh """#!/bin/bash
+sleep 15
+ansible-playbook ${FRAMEWORK_DIR}/ansible/playbooks/status.yml \
+    -i ${PROJECT_DIR}/inventory.ini \
+    -e @${PROJECT_DIR}/config.yml
+"""
             }
         }
 
@@ -166,4 +166,59 @@ pipeline {
         stage('Package') {
             steps {
                 echo 'Packaging static frontend artifact...'
-                sh 'rm -rf dist && mkdir -p dist
+                sh '''#!/bin/bash
+rm -rf dist
+mkdir -p dist
+cp -r app/* dist/
+tar -czf carwash-frontend-static.tar.gz -C dist .
+'''
+            }
+        }
+
+        stage('Approve Production') {
+            when {
+                expression {
+                    return params.DEPLOY_PRODUCTION && (env.BRANCH_NAME == null || env.BRANCH_NAME == 'main')
+                }
+            }
+            steps {
+                input message: 'Deploy frontend build to PRODUCTION?', ok: 'Deploy'
+            }
+        }
+
+        stage('Deploy Production') {
+            when {
+                expression {
+                    return params.DEPLOY_PRODUCTION && (env.BRANCH_NAME == null || env.BRANCH_NAME == 'main')
+                }
+            }
+            steps {
+                script {
+                    if (!params.PROD_DEPLOY_CMD?.trim()) {
+                        error 'DEPLOY_PRODUCTION=true but PROD_DEPLOY_CMD is empty. Provide deployment command.'
+                    }
+                }
+                echo 'Deploying frontend to production...'
+                sh '''#!/bin/bash
+set -euo pipefail
+eval "$PROD_DEPLOY_CMD"
+'''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ [${PROJECT}] Pipeline completed!"
+            echo 'Frontend pipeline completed successfully (no Maven required).'
+        }
+        failure {
+            echo "❌ [${PROJECT}] Pipeline failed! Logs: /opt/carwash-frontend/logs/"
+            echo 'Frontend pipeline failed.'
+        }
+        always {
+            cleanWs()
+        }
+    }
+}
+
