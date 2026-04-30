@@ -28,6 +28,7 @@
           <a href="./index.html#services" class="nav-link">Services</a>
           <a href="./index.html#experience" class="nav-link">The Fleet</a>
           <a href="./membership.html" class="nav-link">Membership</a>
+          <a href="./faq.html" class="nav-link">FAQ</a>
           <a href="./index.html#addons" class="nav-link">Pricing</a>
           <a href="./book-bay-wash.html" class="nav-link">Book Now</a>
         </div>
@@ -98,31 +99,31 @@
           </div>
 
           <div style="max-width: 700px; margin: 0 auto;">
-            <form style="display: grid; gap: 24px;">
+            <form id="contact-form" style="display: grid; gap: 24px;">
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                 <div>
                   <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Name</label>
-                  <input type="text" placeholder="Your name" style="width: 100%; padding: 12px 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;" required />
+                  <input type="text" name="name" placeholder="Your name" style="width: 100%; padding: 12px 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;" required />
                 </div>
                 <div>
                   <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Email</label>
-                  <input type="email" placeholder="your@email.com" style="width: 100%; padding: 12px 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;" required />
+                  <input type="email" name="email" placeholder="your@email.com" style="width: 100%; padding: 12px 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;" required />
                 </div>
               </div>
 
               <div>
                 <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Phone</label>
-                <input type="tel" placeholder="+27 11 555 1234" style="width: 100%; padding: 12px 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;" />
+                <input type="tel" name="phone" placeholder="+27 11 555 1234" style="width: 100%; padding: 12px 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;" />
               </div>
 
               <div>
                 <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Subject</label>
-                <input type="text" placeholder="What is this about?" style="width: 100%; padding: 12px 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;" required />
+                <input type="text" name="subject" placeholder="What is this about?" style="width: 100%; padding: 12px 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif;" required />
               </div>
 
               <div>
                 <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500;">Message</label>
-                <textarea placeholder="Your message here..." rows="6" style="width: 100%; padding: 12px 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif; resize: vertical;"></textarea>
+                <textarea name="message" placeholder="Your message here..." rows="6" style="width: 100%; padding: 12px 16px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 8px; color: var(--ink); font-size: 14px; font-family: Inter, sans-serif; resize: vertical;"></textarea>
               </div>
 
               <button type="submit" class="pill-btn btn-primary" style="width: 100%;">Send Message</button>

@@ -28,6 +28,7 @@
           <a href="./index.html#services" class="nav-link">Services</a>
           <a href="./index.html#experience" class="nav-link">The Fleet</a>
           <a href="./membership.html" class="nav-link">Membership</a>
+          <a href="./faq.html" class="nav-link">FAQ</a>
           <a href="./index.html#addons" class="nav-link">Pricing</a>
           <a href="./book-bay-wash.html" class="nav-link">Book Now</a>
         </div>
@@ -112,6 +113,12 @@
             <p style="margin: 0; color: var(--metallic); font-size: 12px; line-height: 1.6;">Enter payment details once, then click any Join button below to subscribe to that plan.</p>
           </div>
 
+          <div style="max-width: 920px; margin: 0 auto 20px; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 16px; padding: 24px;">
+            <h3 style="margin: 0 0 12px; font-size: 18px; font-weight: 600;">Current Membership</h3>
+            <div id="membership-current-summary" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;"></div>
+            <p id="membership-current-status" style="margin: 10px 0 0; color: var(--metallic); font-size: 13px;"></p>
+          </div>
+
           <div id="membership-plans-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; max-width: 1200px; margin: 0 auto;">
             <!-- Basic Plan -->
             <div class="membership-card">
@@ -135,7 +142,7 @@
                   <span>Member pricing on extras</span>
                 </li>
               </ul>
-              <a href="./book-bay-wash.html" class="pill-btn join-btn">Get Started</a>
+              <button type="button" class="pill-btn join-btn" data-plan-fallback-index="0">Get Started</button>
             </div>
 
             <!-- Pro Plan -->
@@ -165,7 +172,7 @@
                   <span>20% discount on services</span>
                 </li>
               </ul>
-              <a href="./book-bay-wash.html" class="pill-btn join-btn">Join Pro</a>
+              <button type="button" class="pill-btn join-btn" data-plan-fallback-index="1">Join Pro</button>
             </div>
 
             <!-- Premium Plan -->
@@ -198,7 +205,7 @@
                   <span>VIP concierge support</span>
                 </li>
               </ul>
-              <a href="./book-bay-wash.html" class="pill-btn join-btn">Get Premium</a>
+              <button type="button" class="pill-btn join-btn" data-plan-fallback-index="2">Get Premium</button>
             </div>
           </div>
           <p id="membership-sync-status" style="text-align:center;margin:18px 0 0;color:var(--metallic);font-size:13px;"></p>
@@ -369,7 +376,7 @@
           <h2>Ready to Join?</h2>
           <p class="desc">Start your membership today and enjoy unlimited automotive care</p>
           <div class="booking-btn-row">
-            <a href="./book-bay-wash.html" class="pill-btn btn-primary">Join Now</a>
+            <a href="#membership-plans" class="pill-btn btn-primary">Join Now</a>
             <a href="./services.html" class="pill-btn btn-outline">View Services</a>
           </div>
         </div>

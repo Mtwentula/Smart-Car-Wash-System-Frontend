@@ -423,7 +423,7 @@ button:hover {
 .experience-section {
   position: relative;
   width: 100%;
-  background: #fffaf0;
+  background: var(--off-black);
 }
 
 .experience-stage {
@@ -1036,6 +1036,23 @@ button:hover {
     flex-wrap: wrap;
     gap: 12px;
   }
+
+  .hero-line {
+    font-size: clamp(36px, 6vw, 56px) !important;
+  }
+
+  .section-header h2 {
+    font-size: clamp(28px, 5vw, 48px);
+  }
+
+  .benefit-item {
+    padding: 24px;
+    border-radius: 14px;
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .benefits-grid {
@@ -1189,130 +1206,6 @@ button:hover::before {
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@media (max-width: 768px) {
-  .benefits-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .nav-pill {
-    width: calc(100vw - 24px);
-    flex-wrap: wrap;
-    top: 12px;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 16px;
-    height: auto;
-    border-radius: 20px;
-  }
-
-  .menu-toggle-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .nav-links {
-    display: none;
-    width: 100%;
-    order: 10;
-    padding-top: 6px;
-    border-top: 1px solid var(--nav-border);
-    opacity: 0;
-    transform: translateY(-6px);
-    transition: opacity 0.25s ease, transform 0.25s ease;
-  }
-
-  .nav-pill.menu-open .nav-links {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px;
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  .nav-pill.menu-open .nav-link {
-    color: var(--ink);
-    padding: 10px 12px;
-    border-radius: 12px;
-    background: var(--panel);
-    border: 1px solid var(--panel-border);
-  }
-
-  .nav-pill.menu-open .nav-link:hover {
-    background: var(--panel-hover);
-  }
-
-  .theme-toggle-btn {
-    padding: 8px 12px;
-    font-size: 11px;
-  }
-
-  .section {
-    padding: 10vh 0;
-  }
-
-  .section-header {
-    margin-bottom: 48px;
-  }
-
-  .services-grid,
-  .experience-columns,
-  .package-grid,
-  .addons-grid,
-  .steps-grid,
-  .footer-grid,
-  .benefits-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .method-grid,
-  .tiers-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .booking-btn-row {
-    flex-direction: column;
-  }
-
-  .btn-primary,
-  .btn-outline {
-    width: 100%;
-  }
-
-  .experience-grid {
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(4, 1fr);
-  }
-
-  .grid-image--center {
-    grid-column: 1 / span 3;
-    grid-row: 2 / span 2;
-  }
-
-  .footer-bottom {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .footer-bottom-links {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .hero-line {
-    font-size: clamp(36px, 6vw, 56px) !important;
-  }
-
-  .section-header h2 {
-    font-size: clamp(28px, 5vw, 48px);
-  }
-
-  .benefit-item {
-    padding: 24px;
-    border-radius: 14px;
   }
 }
 
