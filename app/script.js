@@ -410,7 +410,7 @@ import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.m
     `;
 
     bottom.innerHTML = `
-      <p class="footer-copy">&copy; 2025 INT216D CarWash. All rights reserved.</p>
+      <p class="footer-copy">&copy; ${new Date().getFullYear()} INT216D CarWash. All rights reserved.</p>
       <div class="footer-bottom-links">
         ${footerLinks.legal
           .map((item) => `<a href="#" class="footer-text-link">${item}</a>`)
